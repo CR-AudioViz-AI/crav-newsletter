@@ -1,6 +1,9 @@
 {
   "version": 2,
   "github": {
-    "autoAlias": true
-  }
+    "autoAlias": false
+  },
+  "buildCommand": "next build",
+  "installCommand": "npm install --legacy-peer-deps",
+  "framework": "nextjs"
 }
