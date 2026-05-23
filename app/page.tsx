@@ -1,95 +1,139 @@
-// app/page.tsx — javari-newsletter
-// Javari Newsletter — AI-powered email newsletter platform
-// Manage subscribers, create AI-written campaigns, track performance
+// app/page.tsx — Javari Newsletter
+// AI-powered email campaigns
 // CR AudioViz AI · EIN 39-3646201 · May 2026
-'use client'
-import { useState, useRef } from 'react'
+"use client";
+import { useState } from "react";
 
-function getFeatures() {
-  return [
-    { emoji: '✍️', title: 'AI-Written Content', desc: 'Generate full newsletters from a topic in seconds. Subject lines, body copy, CTAs — all written by Javari AI.' },
-    { emoji: '📊', title: 'Real-Time Analytics', desc: 'Open rates, click-through rates, unsubscribes — live dashboards powered by your Supabase data.' },
-    { emoji: '👥', title: 'Subscriber Management', desc: 'Import lists, segment by behavior, automate welcome sequences. Your list, your rules.' },
-    { emoji: '🎨', title: 'Beautiful Templates', desc: '20+ responsive email templates. Customize colors, fonts, and layouts. Works in every inbox.' },
-    { emoji: '⚡', title: 'Send at Scale', desc: 'Send to 1 or 100,000 subscribers. AWS SES integration for reliable, affordable delivery.' },
-    { emoji: '🔄', title: 'Automation Flows', desc: 'Drip campaigns, re-engagement sequences, behavioral triggers. Set it and let it run.' },
-  ]
-}
+const TYPES = [
+  { id:"welcome",     label:"Welcome Email",     emoji:"👋", desc:"First impression that converts" },
+  { id:"newsletter",  label:"Newsletter",         emoji:"📰", desc:"Weekly/monthly updates" },
+  { id:"promo",       label:"Promotional",        emoji:"💰", desc:"Drive sales and conversions" },
+  { id:"nurture",     label:"Drip/Nurture",       emoji:"🌱", desc:"Long-term relationship building" },
+  { id:"reengagement",label:"Re-engagement",      emoji:"🔥", desc:"Win back inactive subscribers" },
+  { id:"announcement",label:"Announcement",       emoji:"📣", desc:"New product/feature launch" },
+];
 
-export default function NewsletterPage() {
-  const features = getFeatures()
-  const [email, setEmail] = useState('')
-  const [submitted, setSubmitted] = useState(false)
-  const emailRef = useRef(null)
+export default function NewsletterHome() {
+  const [type, setType] = useState("newsletter");
+  const [brand, setBrand] = useState("");
+  const [topic, setTopic] = useState("");
+  const [audience, setAudience] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function handleSignup(e) {
-    e.preventDefault()
-    if (!email) return
-    setSubmitted(true)
-    window.location.href = 'https://craudiovizai.com/auth/signup?app=javari-newsletter&return_to=' + encodeURIComponent(window.location.href)
+  const t = TYPES.find(x => x.id === type) || TYPES[0];
+
+  async function generate() {
+    if (!topic.trim()) return;
+    setLoading(true); setEmail("");
+    try {
+      const res = await fetch("/api/chat", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          messages: [{ role:"user", content:`Write a complete ${t.label} email.
+
+Brand/Company: ${brand || "Our Company"}
+Topic/Purpose: ${topic}
+Audience: ${audience || "our subscribers"}
+
+Include:
+- Subject line (A/B test: give 2 options)
+- Preview text (under 100 chars)
+- Email body with proper structure (greeting, main content, CTA)
+- Signature/footer
+
+Tone: ${t.id === "promo" ? "Persuasive and urgent" : t.id === "welcome" ? "Warm and welcoming" : "Professional and engaging"}
+Format clearly with labeled sections.` }],
+          stream:false,
+          systemOverride:"You are an email marketing expert who has written campaigns generating millions in revenue. Write compelling, high-converting emails with strong subject lines, clear CTAs, and personalized content that drives action.",
+        }),
+      });
+      const data = await res.json();
+      setEmail(data?.choices?.[0]?.message?.content || data?.content || "Error.");
+    } catch { setEmail("Connection error."); }
+    setLoading(false);
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#e2e8f0', fontFamily: 'system-ui, sans-serif' }}>
-      {/* NAV */}
-      <nav style={{ position: 'sticky', top: 48, zIndex: 90, background: 'rgba(10,10,15,0.97)', borderBottom: '1px solid rgba(99,102,241,0.12)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px' }}>
-        <a href="https://craudiovizai.com" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <span style={{ fontSize: 22 }}>📧</span>
-          <span style={{ fontWeight: 800, color: '#6366f1', fontSize: 15 }}>Javari Newsletter</span>
-        </a>
-        <a href="https://craudiovizai.com/auth/signup" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', borderRadius: 8, padding: '7px 18px', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start Free →</a>
+    <div style={{ minHeight:"100vh", background:"#040912", color:"#e2e8f0", fontFamily:"system-ui" }}>
+      <nav style={{ background:"#1E3A5F", padding:"0 20px", height:52, display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:100 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontSize:18 }}>📧</span>
+          <span style={{ fontWeight:800, color:"#00B4D8", fontSize:15 }}>Javari Newsletter</span>
+        </div>
+        <a href="https://craudiovizai.com/auth/signup" style={{ background:"#FF0800", color:"#fff", borderRadius:7, padding:"5px 14px", fontSize:12, fontWeight:700, textDecoration:"none" }}>Sign Up Free</a>
       </nav>
 
-      {/* HERO */}
-      <section style={{ textAlign: 'center', padding: '80px 24px 60px', maxWidth: 700, margin: '0 auto' }}>
-        <div style={{ display: 'inline-block', background: 'rgba(99,102,241,0.15)', color: '#818cf8', borderRadius: 20, padding: '4px 14px', fontSize: 12, fontWeight: 700, marginBottom: 20, letterSpacing: '0.06em', textTransform: 'uppercase' }}>AI-Powered Email Marketing</div>
-        <h1 style={{ fontSize: 'clamp(28px,5vw,52px)', fontWeight: 800, margin: '0 0 20px', lineHeight: 1.1, letterSpacing: '-0.03em' }}>
-          Newsletters that write <span style={{ color: '#6366f1' }}>themselves</span>
+      <section style={{ background:"linear-gradient(135deg,#1E3A5F,#040912)", padding:"56px 24px 48px", textAlign:"center" }}>
+        <h1 style={{ fontSize:"clamp(26px,4vw,46px)", fontWeight:900, color:"#fff", margin:"0 0 14px", lineHeight:1.05 }}>
+          Emails That Get<br /><span style={{ color:"#00B4D8" }}>Opened and Clicked</span>
         </h1>
-        <p style={{ fontSize: 18, color: '#9ca3af', lineHeight: 1.65, maxWidth: 520, margin: '0 auto 36px' }}>
-          Tell Javari AI your topic. Get a full newsletter — subject line, body, CTAs. Send to your whole list in one click.
+        <p style={{ color:"rgba(255,255,255,0.7)", fontSize:15, lineHeight:1.65, margin:0, maxWidth:480, marginLeft:"auto", marginRight:"auto" }}>
+          Complete email campaigns in seconds. Subject lines, body copy, CTAs — all done.
         </p>
-        <form onSubmit={handleSignup} style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', maxWidth: 440, margin: '0 auto' }}>
-          <input ref={emailRef} type="email" value={email} onChange={e => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            style={{ flex: 1, minWidth: 220, padding: '12px 16px', borderRadius: 10, border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.07)', color: '#e2e8f0', fontSize: 14, outline: 'none' }} />
-          <button type="submit"
-            style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', border: 'none', borderRadius: 10, padding: '12px 22px', fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            Get Started Free
-          </button>
-        </form>
-        <p style={{ marginTop: 14, fontSize: 12, color: '#374151' }}>50 sends free every month · No credit card required · Credits never expire</p>
       </section>
 
-      {/* FEATURES */}
-      <section style={{ maxWidth: 960, margin: '0 auto 80px', padding: '0 20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-          {features.map((f, i) => (
-            <div key={i} style={{ background: '#111118', border: '1px solid rgba(99,102,241,0.1)', borderRadius: 14, padding: '24px' }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>{f.emoji}</div>
-              <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>{f.title}</h3>
-              <p style={{ margin: 0, fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>{f.desc}</p>
+      <div style={{ maxWidth:900, margin:"0 auto", padding:"32px 20px 72px", display:"grid", gridTemplateColumns:"280px 1fr", gap:24 }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+          <div>
+            <p style={{ fontSize:11, fontWeight:700, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.06em", margin:"0 0 8px" }}>Email Type</p>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              {TYPES.map(tp => (
+                <button key={tp.id} onClick={() => setType(tp.id)}
+                  style={{ background: type===tp.id ? "rgba(0,180,216,0.15)" : "#0F1F32", border:`1px solid ${type===tp.id ? "rgba(0,180,216,0.3)" : "rgba(255,255,255,0.07)"}`, borderRadius:8, padding:"8px 12px", cursor:"pointer", fontFamily:"system-ui", textAlign:"left", display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ fontSize:18 }}>{tp.emoji}</span>
+                  <div>
+                    <div style={{ fontSize:12, color: type===tp.id ? "#00B4D8" : "#e2e8f0", fontWeight:600 }}>{tp.label}</div>
+                    <div style={{ fontSize:10, color:"#374151" }}>{tp.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {[["brand","Brand / Company","CR AudioViz AI"],["audience","Target Audience","Small business owners"],["topic","Email Topic / Goal","New feature launch, monthly updates..."]].map(([k,l,ph]) => (
+            <div key={k}>
+              <p style={{ fontSize:11, fontWeight:700, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.06em", margin:"0 0 6px" }}>{l}</p>
+              {k === "topic" ? (
+                <textarea value={topic} onChange={e => setTopic(e.target.value)} rows={2} placeholder={ph}
+                  style={{ width:"100%", background:"#0F1F32", border:"1px solid rgba(0,180,216,0.15)", borderRadius:8, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"system-ui", boxSizing:"border-box", resize:"vertical" }} />
+              ) : (
+                <input value={k==="brand" ? brand : audience} onChange={e => k==="brand" ? setBrand(e.target.value) : setAudience(e.target.value)} placeholder={ph}
+                  style={{ width:"100%", background:"#0F1F32", border:"1px solid rgba(0,180,216,0.15)", borderRadius:8, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"system-ui", boxSizing:"border-box" }} />
+              )}
             </div>
           ))}
+
+          <button onClick={generate} disabled={loading||!topic.trim()}
+            style={{ background: loading||!topic.trim() ? "#0F1F32" : "linear-gradient(135deg,#1E3A5F,#00B4D8)", color: loading||!topic.trim() ? "#374151" : "#fff", border:"none", borderRadius:10, padding:"12px", fontSize:14, fontWeight:700, cursor: loading||!topic.trim() ? "not-allowed":"pointer", fontFamily:"system-ui" }}>
+            {loading ? "Writing email..." : "✉️ Generate Email"}
+          </button>
         </div>
-      </section>
 
-      {/* CTA */}
-      <section style={{ textAlign: 'center', padding: '60px 24px 80px', borderTop: '1px solid rgba(99,102,241,0.08)' }}>
-        <h2 style={{ fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, margin: '0 0 16px' }}>Start your newsletter today</h2>
-        <p style={{ color: '#6b7280', fontSize: 15, marginBottom: 28 }}>50 free sends/month. AI-written content. Real analytics.</p>
-        <a href="https://craudiovizai.com/auth/signup?app=javari-newsletter"
-          style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', borderRadius: 10, padding: '14px 32px', fontSize: 15, fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>
-          Create Free Account →
-        </a>
-      </section>
+        <div>
+          {email ? (
+            <div style={{ background:"#0F1F32", border:"1px solid rgba(0,180,216,0.12)", borderRadius:14, padding:"20px 24px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:14 }}>
+                <span style={{ fontSize:13, fontWeight:700, color:"#00B4D8" }}>{t.emoji} {t.label}</span>
+                <button onClick={() => navigator.clipboard?.writeText(email)}
+                  style={{ background:"transparent", color:"#6B7280", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:"3px 10px", fontSize:12, cursor:"pointer", fontFamily:"system-ui" }}>Copy</button>
+              </div>
+              <pre style={{ margin:0, fontSize:13, color:"#e2e8f0", lineHeight:1.7, whiteSpace:"pre-wrap", fontFamily:"system-ui" }}>{email}</pre>
+            </div>
+          ) : (
+            <div style={{ background:"#0F1F32", border:"1px solid rgba(0,180,216,0.06)", borderRadius:14, padding:"56px 24px", textAlign:"center", color:"#374151" }}>
+              <div style={{ fontSize:40, marginBottom:12 }}>✉️</div>
+              <p style={{ fontSize:13 }}>Your complete email will appear here</p>
+              {loading && <p style={{ fontSize:12, marginTop:8 }}>Writing your {t.label}...</p>}
+            </div>
+          )}
+        </div>
+      </div>
 
-      <footer style={{ borderTop: '1px solid rgba(99,102,241,0.07)', padding: '20px 24px', textAlign: 'center' }}>
-        <p style={{ color: '#1f2937', fontSize: 11, margin: 0, fontFamily: 'system-ui' }}>
-          © 2026 CR AudioViz AI, LLC — EIN: 39-3646201 · Fort Myers, Florida · Your Story. Our Design. ·{' '}
-          <a href="https://craudiovizai.com" style={{ color: '#374151', textDecoration: 'none' }}>craudiovizai.com</a>
-        </p>
+      <footer style={{ borderTop:"1px solid rgba(0,180,216,0.08)", padding:"14px 24px", textAlign:"center" }}>
+        <p style={{ color:"#374151", fontSize:11, margin:0 }}>© 2026 CR AudioViz AI, LLC — EIN: 39-3646201 · <a href="https://craudiovizai.com/auth/signup" style={{ color:"#FF0800", textDecoration:"none", fontWeight:600 }}>Sign Up Free</a></p>
       </footer>
     </div>
-  )
+  );
 }
